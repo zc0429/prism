@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism · 用量详情</title>
+
+<!-- React 18 UMD -->
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<!-- Prop Types -->
+<script crossorigin src="https://cdn.jsdelivr.net/npm/prop-types@15/prop-types.min.js"></script>
+
+<!-- Recharts 2.10 UMD -->
+<script crossorigin src="https://cdn.jsdelivr.net/npm/recharts@2.10.4/umd/Recharts.js"></script>
+
+<!-- Babel Standalone -->
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+
+<style>
+  :root {
+    --bg:       #faf8f5;
+    --card:     #ffffff;
+    --text:     #2d221e;
+    --muted:    #8a7d74;
+    --primary:  #ce6c3e;
+    --primary-bg: rgba(206,108,62,0.08);
+    --border:   #e8e0d9;
+    --shadow:   0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-md:0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
+    --radius:   12px;
+    --radius-lg:16px;
+    --chart-1:  #ce6c3e;
+    --chart-2:  #6b9b8a;
+    --chart-3:  #dcb06c;
+    --chart-4:  #8b7d9b;
+    --chart-5:  #c47d7d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 48px 32px;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+  }
+
+  .page { width: 100%; max-width: 1200px; }
+
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .header h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+
+  .tabs {
+    display: inline-flex; background: var(--card);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 3px;
+  }
+  .tab {
+    padding: 6px 16px; font-size: 13px; font-weight: 500;
+    border: none; border-radius: 9px; cursor: pointer;
+    transition: all 150ms ease; background: transparent;
+    color: var(--muted); font-family: inherit;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--primary); color: #fff; }
+
+  .stat-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow);
+  }
+  .stat-card .label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .stat-card .value { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .charts-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 32px;
+  }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow);
+  }
+  .chart-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.01em; }
+
+  .table-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
+  }
+  .table-header h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-size: 12px; font-weight: 500; color: var(--muted);
+    text-align: left; padding: 12px 24px;
+    border-bottom: 1px solid var(--border); background: #faf8f5;
+  }
+  thead th.right { text-align: right; }
+  tbody td {
+    font-size: 13px; padding: 14px 24px;
+    border-bottom: 1px solid #f3ede6; color: var(--text);
+  }
+  tbody td.right { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #faf8f5; }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    padding: 2px 8px; border-radius: 6px;
+    background: var(--primary-bg); color: var(--primary);
+  }
+  .empty { text-align: center; padding: 48px 24px; color: var(--muted); font-size: 14px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 16px; font-size: 13px; font-weight: 500;
+    border-radius: 9px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text);
+    cursor: pointer; transition: all 150ms ease; font-family: inherit; white-space: nowrap;
+  }
+  .btn:hover { background: #f5f0eb; }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .pagination {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 8px; padding: 16px 24px; border-top: 1px solid var(--border);
+  }
+  .pagination span { font-size: 13px; color: var(--muted); }
+
+  @media (max-width: 900px) {
+    body { padding: 24px 16px; }
+    .stat-cards { grid-template-columns: 1fr 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .stat-cards .stat-card:last-child { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useCallback, useEffect } = React;
+const {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} = Recharts;
+
+/* ========== Mock Data Generator ========== */
+
+const MODELS = ['claude-sonnet-4','gpt-4o','deepseek-v3','claude-opus-4','gemini-2.5-pro','qwen-max','llama-4-maverick','mistral-large'];
+const TOOLS = ['claude-code','opencode','openclaw','hermes'];
+
+function seedRandom(seed) {
+  let s = seed;
+  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+}
+
+function generateDailyData(days) {
+  const rand = seedRandom(42);
+  const data = [];
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const trend = 1 + (days - i) / days * 0.6;
+    const noise = 0.7 + rand() * 0.6;
+    const weekendFactor = isWeekend ? 0.4 : 1.0;
+    const spike = rand() < 0.08 ? 2.0 + rand() * 2 : 1;
+    data.push({
+      date: `${date.getMonth() + 1}/${date.getDate()}`,
+      inputTokens: Math.round(80000 * trend * noise * weekendFactor * spike),
+      outputTokens: Math.round(30000 * trend * noise * weekendFactor * spike),
+    });
+  }
+  return data;
+}
+
+function generateLogs(days, page, pageSize) {
+  const rand = seedRandom(99 + page * 1000);
+  const logs = [];
+  const now = new Date();
+  const startDate = new Date(now);
+  startDate.setDate(startDate.getDate() - days);
+  for (let i = 0; i < pageSize; i++) {
+    const date = new Date(startDate.getTime() + rand() * (now.getTime() - startDate.getTime()));
+    const model = MODELS[Math.floor(rand() * MODELS.length)];
+    const tool = TOOLS[Math.floor(rand() * TOOLS.length)];
+    const inputTokens = Math.round(2000 + rand() * 50000);
+    const outputTokens = Math.round(500 + rand() * 20000);
+    const cost = (inputTokens * 3e-6 + outputTokens * 1.5e-5) * (0.5 + rand());
+    logs.push({
+      id: `log-${page}-${i}`,
+      createdAt: date.toISOString(),
+      toolId: tool,
+      model,
+      inputTokens,
+      outputTokens,
+      costUsd: parseFloat(cost.toFixed(4)),
+    });
+  }
+  return logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+const DAILY_DATA_ALL = generateDailyData(90);
+
+const MODEL_DIST = [
+  { model: 'Claude Sonnet', count: 1247 },
+  { model: 'GPT-4o', count: 892 },
+  { model: 'DeepSeek V3', count: 703 },
+  { model: 'Claude Opus', count: 418 },
+  { model: 'Gemini 2.5 Pro', count: 251 },
+];
+
+const PIE_COLORS = ['var(--chart-1)','var(--chart-2)','var(--chart-3)','var(--chart-4)','var(--chart-5)'];
+
+const fmtNum = n => (n == null) ? '0' : n.toLocaleString('en-US');
+
+/* ========== Inline SVG Icons ========== */
+
+const IconDownload = props => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width:14, height:14 }}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1={12} y1={15} x2={12} y2={3} />
+  </svg>
+);
+
+const IconChevronLeft = props => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width:14, height:14 }}>
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+
+const IconChevronRight = props => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width:14, height:14 }}>
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+/* ========== Sub-Components ========== */
+
+function StatCard({ label, value, sub, accent }) {
+  return (
+    <div className="stat-card">
+      <div className="label">{label}</div>
+      <div className="value" style={accent ? { color: 'var(--primary)' } : undefined}>{value}</div>
+      {sub && <div className="sub">{sub}</div>}
+    </div>
+  );
+}
+
+function TabsRow({ range, onChange }) {
+  return (
+    <div className="tabs">
+      {['7d','30d','90d'].map(r => (
+        <button key={r} className={`tab ${range === r ? 'active' : ''}`} onClick={() => onChange(r)}>
+          {r === '7d' ? '7 天' : r === '30d' ? '30 天' : '90 天'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TokenLineChart({ data }) {
+  if (!data || data.length === 0) {
+    return <div className="empty">暂无数据</div>;
+  }
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={data} margin={{ top:5, right:10, left:0, bottom:5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e8e0d9" />
+        <XAxis dataKey="date" tick={{ fontSize:11, fill:'#8a7d74' }} interval="preserveStartEnd" />
+        <YAxis tick={{ fontSize:11, fill:'#8a7d74' }} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
+        <Tooltip contentStyle={{ background:'#fff', border:'1px solid #e8e0d9', borderRadius:'10px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', fontSize:'13px', color:'#2d221e' }} />
+        <Legend wrapperStyle={{ color:'#8a7d74', fontSize:'13px' }} />
+        <Line type="monotone" dataKey="inputTokens" name="Input Tokens" stroke="var(--chart-1)" strokeWidth={2} dot={false} activeDot={{ r:4, fill:'var(--chart-1)' }} />
+        <Line type="monotone" dataKey="outputTokens" name="Output Tokens" stroke="var(--chart-2)" strokeWidth={2} dot={false} activeDot={{ r:4, fill:'var(--chart-2)' }} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+function ModelPieChart({ data }) {
+  if (!data || data.length === 0) {
+    return <div className="empty">暂无数据</div>;
+  }
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <PieChart>
+        <Pie
+          data={data} dataKey="count" nameKey="model"
+          cx="50%" cy="50%" outerRadius={100} innerRadius={40}
+          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          labelLine={{ stroke: '#e8e0d9' }}
+        >
+          {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+        </Pie>
+        <Tooltip contentStyle={{ background:'#fff', border:'1px solid #e8e0d9', borderRadius:'10px', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', fontSize:'13px', color:'#2d221e' }} />
+        <Legend wrapperStyle={{ color:'#8a7d74', fontSize:'13px' }} />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+function DataTable({ logs, range, page, totalPages, onPageChange }) {
+  const exportCSV = useCallback(() => {
+    if (!logs.length) return;
+    const header = 'Date,Tool,Model,Input Tokens,Output Tokens,Cost (USD)';
+    const rows = logs.map(r =>
+      [new Date(r.createdAt).toLocaleDateString('zh-CN'), r.toolId ?? '', r.model, r.inputTokens ?? 0, r.outputTokens ?? 0, r.costUsd ?? 0].join(',')
+    );
+    const csv = '\uFEFF' + header + '\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `prism-usage-${range}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }, [logs, range]);
+
+  return (
+    <div className="table-card">
+      <div className="table-header">
+        <h3>使用记录</h3>
+        <button className="btn" onClick={exportCSV}>
+          <IconDownload /> 导出 CSV
+        </button>
+      </div>
+      {logs.length === 0 ? (
+        <div className="empty">暂无数据</div>
+      ) : (
+        <>
+          <table>
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>工具</th>
+                <th>模型</th>
+                <th className="right">Input Tokens</th>
+                <th className="right">Output Tokens</th>
+                <th className="right">费用</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map(row => (
+                <tr key={row.id}>
+                  <td>{new Date(row.createdAt).toLocaleDateString('zh-CN')}</td>
+                  <td><span className="badge">{row.toolId ?? '-'}</span></td>
+                  <td>{row.model}</td>
+                  <td className="right">{fmtNum(row.inputTokens)}</td>
+                  <td className="right">{fmtNum(row.outputTokens)}</td>
+                  <td className="right">${(row.costUsd ?? 0).toFixed(4)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button className="btn" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+                <IconChevronLeft />
+              </button>
+              <span>{page} / {totalPages}</span>
+              <button className="btn" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+                <IconChevronRight />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ========== Root Component ========== */
+
+function UsagePage() {
+  const [range, setRange] = useState('30d');
+  const [page, setPage] = useState(1);
+
+  const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+
+  const summary = useMemo(() => {
+    const filteredData = DAILY_DATA_ALL.slice(-days);
+    const totalInput = filteredData.reduce((s, d) => s + d.inputTokens, 0);
+    const totalOutput = filteredData.reduce((s, d) => s + d.outputTokens, 0);
+    const totalTokens = totalInput + totalOutput;
+    const cost = totalInput * 3e-6 + totalOutput * 1.5e-5;
+    const modelCount = 5 + Math.floor(days / 30);
+    return { totalTokens: Math.round(totalTokens), totalCost: parseFloat(cost.toFixed(2)), activeModels: modelCount };
+  }, [days]);
+
+  const pageSize = 10;
+  const logs = useMemo(() => generateLogs(days, page, pageSize), [days, page]);
+  const totalLogs = useMemo(() => Math.max(50, days * 3), [days]);
+  const totalPages = Math.ceil(totalLogs / pageSize);
+
+  useEffect(() => { setPage(1); }, [range]);
+
+  const chartData = DAILY_DATA_ALL.slice(-days);
+
+  return (
+    <div className="page">
+      <div className="header">
+        <h1>用量详情</h1>
+        <TabsRow range={range} onChange={setRange} />
+      </div>
+
+      <div className="stat-cards">
+        <StatCard label="Total Tokens" value={summary.totalTokens.toLocaleString('en-US')} sub={`${days} 天累计`} />
+        <StatCard label="Total Cost" value={`$${summary.totalCost.toFixed(2)}`} sub={`${days} 天累计`} accent />
+        <StatCard label="Active Models" value={String(summary.activeModels)} sub={`${days} 天内有调用的模型`} />
+      </div>
+
+      <div className="charts-row">
+        <div className="chart-card">
+          <h3>Token 使用趋势</h3>
+          <TokenLineChart data={chartData} />
+        </div>
+        <div className="chart-card">
+          <h3>模型分布</h3>
+          <ModelPieChart data={MODEL_DIST} />
+        </div>
+      </div>
+
+      <DataTable logs={logs} range={range} page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <div style={{ textAlign:'center', marginTop:40, fontSize:12, color:'var(--muted)' }}>
+        Prism · 用量详情原型 · 模拟数据
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<UsagePage />);
+</script>
+</body>
+</html>

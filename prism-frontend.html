@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism — Claude Code 增强工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-app:      #f5f4ef;
+  --bg-sidebar:  #faf9f5;
+  --bg-surface:  #faf9f5;
+  --bg-card:     #ffffff;
+  --bg-hover:    #f0ede6;
+  --bg-active:   #ede9e0;
+
+  --border:      #e4e1d8;
+  --border-mid:  #d5d1c8;
+  --border-dark: #c4c0b6;
+
+  --text-1: #141413;
+  --text-2: #5a5850;
+  --text-3: #9c9890;
+  --text-4: #b8b4ac;
+
+  --orange:       #d97757;
+  --orange-light: #f4ece7;
+  --orange-mid:   #e8c4b5;
+  --orange-dark:  #a3523a;
+
+  --blue:         #6a9bcc;
+  --blue-light:   #e8f0f8;
+  --blue-dark:    #3d6a94;
+
+  --green:        #788c5d;
+  --green-light:  #eaf0e2;
+  --green-dark:   #4a5c38;
+
+  --red:          #c0504a;
+  --red-light:    #fbeaea;
+
+  --amber:        #b8892a;
+  --amber-light:  #fdf3e0;
+
+  --sidebar-w: 224px;
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg-app);
+  color: var(--text-1);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.logo-area {
+  padding: 22px 18px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+
+.logo-icon { width: 34px; height: 34px; flex-shrink: 0; }
+
+.logo-text .name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+
+.logo-text .tagline {
+  font-size: 10.5px;
+  color: var(--text-3);
+  margin-top: 2px;
+  letter-spacing: 0.2px;
+}
+
+.nav { padding: 14px 10px; flex: 1; }
+
+.nav-label {
+  font-size: 10px;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 0 8px;
+  margin: 14px 0 5px;
+  font-weight: 500;
+}
+
+.nav-label:first-child { margin-top: 0; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 13.5px;
+  transition: all 0.14s;
+  margin-bottom: 1px;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover { background: var(--bg-hover); color: var(--text-1); }
+
+.nav-item.active {
+  background: var(--orange-light);
+  color: var(--orange-dark);
+  border-color: var(--orange-mid);
+  font-weight: 500;
+}
+
+.nav-item svg { opacity: 0.75; flex-shrink: 0; }
+.nav-item.active svg { opacity: 1; }
+
+.nav-badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: var(--orange-light);
+  color: var(--orange);
+  border: 1px solid var(--orange-mid);
+  font-weight: 500;
+}
+
+.sidebar-bottom {
+  padding: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balance-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.balance-pill:hover { border-color: var(--border-dark); }
+
+.balance-label { font-size: 11px; color: var(--text-3); margin-bottom: 2px; }
+.balance-amount {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.balance-amount span { font-size: 11px; color: var(--text-3); font-weight: 400; margin-left: 2px; }
+
+.topup-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--orange);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.topup-btn:hover { color: var(--orange-dark); }
+
+/* ════════════════════════════════════
+   MAIN
+════════════════════════════════════ */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.page-sub { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+
+.topbar-right { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  transition: all 0.14s; border: 1px solid transparent;
+  font-weight: 500; text-decoration: none; outline: none;
+}
+
+.btn-ghost {
+  background: transparent; border-color: var(--border-mid);
+  color: var(--text-2);
+}
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); border-color: var(--border-dark); }
+
+.btn-primary {
+  background: var(--orange); color: #fff; border-color: var(--orange);
+}
+.btn-primary:hover { background: #c96847; border-color: #c96847; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-outline-primary {
+  background: var(--orange-light); color: var(--orange-dark);
+  border-color: var(--orange-mid);
+}
+.btn-outline-primary:hover { background: #edd8cf; }
+
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-lg { padding: 11px 22px; font-size: 14.5px; }
+
+.content {
+  flex: 1; overflow-y: auto; padding: 28px 30px;
+  scrollbar-width: thin; scrollbar-color: var(--border-mid) transparent;
+}
+
+/* ════════════════════════════════════
+   VIEWS
+════════════════════════════════════ */
+.view { display: none; }
+.view.active { display: block; animation: fadeUp 0.2s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.sec-head { margin-bottom: 26px; }
+.sec-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 21px; font-weight: 700;
+  color: var(--text-1); margin-bottom: 5px;
+  letter-spacing: -0.3px;
+}
+.sec-desc { font-size: 13.5px; color: var(--text-2); }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+}
+
+/* ─ Download View ─ */
+.dl-hero {
+  text-align: center;
+  padding: 20px 0 32px;
+}
+
+.dl-hero-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px; font-weight: 700;
+  color: var(--text-1); margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+
+.dl-hero-sub {
+  font-size: 14px; color: var(--text-2);
+  max-width: 480px; margin: 0 auto 8px;
+  line-height: 1.7;
+}
+
+.version-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--green-light); color: var(--green-dark);
+  border: 1px solid #c5d4ae; border-radius: 20px;
+  font-size: 11.5px; font-weight: 500; padding: 4px 12px;
+  margin-bottom: 32px;
+}
+
+.os-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.os-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 20px 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+}
+
+.os-card:hover {
+  border-color: var(--border-dark);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  transform: translateY(-2px);
+}
+
+.os-card.primary-os { border-color: var(--orange); }
+.os-card.primary-os:hover { border-color: var(--orange-dark); }
+
+.os-recommend {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  background: var(--orange); color: #fff;
+  font-size: 10.5px; font-weight: 600; padding: 3px 12px;
+  border-radius: 20px; white-space: nowrap;
+  font-family: 'Poppins', sans-serif;
+}
+
+.os-icon {
+  width: 52px; height: 52px;
+  margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius);
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+}
+
+.os-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px; font-weight: 600; margin-bottom: 4px;
+}
+
+.os-arch {
+  font-size: 11.5px; color: var(--text-3); margin-bottom: 16px;
+}
+
+.os-size { font-size: 11.5px; color: var(--text-4); margin-top: 10px; }
+
+.dl-info-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin-bottom: 28px;
+}
+
+.dl-info-cell {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.dl-info-cell .label { font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
+.dl-info-cell .value { font-size: 14px; font-weight: 500; color: var(--text-1); }
+
+/* ─ Install View ─ */
+.steps-row {
+  display: flex; align-items: flex-start;
+  gap: 0; margin-bottom: 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+}
+
+.step {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  position: relative;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 17px; left: calc(50% + 20px);
+  right: calc(-50% + 20px);
+  height: 1.5px;
+  background: var(--border-mid);
+}
+
+.step.done:not(:last-child)::after { background: var(--orange-mid); }
+
+.step-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 8px; position: relative; z-index: 1;
+  border: 2px solid var(--border-mid);
+  background: var(--bg-surface);
+  color: var(--text-3);
+  transition: all 0.3s;
+}
+
+.step.done .step-circle {
+  background: var(--orange); border-color: var(--orange);
+  color: #fff;
+}
+
+.step.active .step-circle {
+  background: var(--orange-light); border-color: var(--orange);
+  color: var(--orange-dark);
+  box-shadow: 0 0 0 4px var(--orange-light);
+}
+
+.step-name { font-size: 12px; color: var(--text-3); font-weight: 500; }
+.step.done .step-name, .step.active .step-name { color: var(--text-1); }
+
+.check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+
+.check-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+
+.check-card.ok { border-color: #c0d4a8; background: #f8fbf4; }
+.check-card.running { border-color: var(--orange-mid); background: var(--orange-light); }
+.check-card.fail { border-color: #e8b5b5; background: #fdf5f5; }
+.check-card.wait { }
+
+.check-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+
+.check-ic {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.check-ic.ok { background: #e2f0d6; color: var(--green); }
+.check-ic.running { background: var(--orange-mid); color: var(--orange-dark); }
+.check-ic.fail { background: #f0d6d6; color: var(--red); }
+.check-ic.wait { background: var(--bg-app); color: var(--text-4); }
+
+.check-badge {
+  font-size: 10.5px; font-weight: 500; padding: 2px 8px; border-radius: 20px;
+}
+
+.check-badge.ok { background: #e2f0d6; color: var(--green-dark); }
+.check-badge.running { background: var(--orange-mid); color: var(--orange-dark); }
+.check-badge.fail { background: #f0d6d6; color: var(--red); }
+.check-badge.wait { background: var(--bg-app); color: var(--text-3); border: 1px solid var(--border); }
+
+.check-name { font-size: 13.5px; font-weight: 500; color: var(--text-1); margin-bottom: 2px; }
+.check-detail { font-size: 11.5px; color: var(--text-3); }
+
+.terminal {
+  background: #1e1c1a;
+  border: 1px solid #2e2b27;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 12px; line-height: 1.85;
+  margin-bottom: 20px; min-height: 180px;
+  max-height: 260px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: #3a3733 transparent;
+}
+
+.term-header {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px; padding-bottom: 10px;
+  border-bottom: 1px solid #2e2b27;
+}
+
+.term-dot { width: 10px; height: 10px; border-radius: 50%; }
+.td-r { background: #ff5f57; } .td-y { background: #ffbd2e; } .td-g { background: #28c840; }
+.term-label { font-size: 11px; color: #5a5650; margin-left: 6px; }
+
+.tl { color: #6a6560; }
+.tl.info { color: #7baed9; }
+.tl.ok { color: #7cb870; }
+.tl.warn { color: #d9a05a; }
+.tl.err { color: #e07070; }
+.tl.prompt { color: #5a5650; }
+
+.prog-wrap { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--orange); border-radius: 2px; width: 0; transition: width 0.5s ease; }
+
+/* ─ BYOK View ─ */
+.byok-layout { display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; }
+
+.form-group { margin-bottom: 15px; }
+.form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 5px; }
+
+.form-input {
+  width: 100%; background: var(--bg-surface);
+  border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
+  padding: 8px 12px; color: var(--text-1);
+  font-family: inherit; font-size: 13.5px;
+  transition: border-color 0.14s; outline: none;
+}
+
+.form-input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-light); }
+.form-input::placeholder { color: var(--text-4); }
+.form-input.mono { font-family: 'DM Mono', monospace; font-size: 12.5px; }
+
+.password-wrap { position: relative; }
+.password-wrap .form-input { padding-right: 36px; }
+.pw-toggle {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  cursor: pointer; color: var(--text-3); padding: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pw-toggle:hover { color: var(--text-1); }
+
+.model-tabs {
+  display: flex; gap: 0;
+  border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
+  overflow: hidden; margin-bottom: 14px;
+}
+
+.model-tab {
+  flex: 1; padding: 7px; text-align: center;
+  font-size: 12.5px; font-weight: 500; cursor: pointer;
+  transition: all 0.14s; color: var(--text-2);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-mid);
+}
+
+.model-tab:last-child { border-right: none; }
+.model-tab:hover { background: var(--bg-hover); color: var(--text-1); }
+.model-tab.active { background: var(--orange-light); color: var(--orange-dark); }
+
+.provider-list { display: flex; flex-direction: column; gap: 6px; }
+
+.provider-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); cursor: pointer;
+  transition: all 0.14s; background: var(--bg-surface);
+}
+
+.provider-row:hover { border-color: var(--border-dark); background: var(--bg-hover); }
+.provider-row.selected { border-color: var(--orange); background: var(--orange-light); }
+
+.prov-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.prov-name { font-size: 13px; font-weight: 500; flex: 1; }
+.prov-model { font-size: 11.5px; color: var(--text-3); }
+.prov-tag {
+  font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  font-weight: 500;
+}
+.prov-tag.cn { background: var(--green-light); color: var(--green-dark); }
+.prov-tag.intl { background: var(--blue-light); color: var(--blue-dark); }
+
+.code-block {
+  background: #1e1c1a; border-radius: var(--radius-sm);
+  padding: 14px; font-family: 'DM Mono', monospace;
+  font-size: 12px; line-height: 1.9;
+  border: 1px solid #2e2b27; margin-bottom: 14px;
+}
+.cj-key { color: #7baed9; }
+.cj-str { color: #7cb870; }
+.cj-bool { color: #d9a05a; }
+.cj-brace { color: #6a6560; }
+
+.info-strip {
+  display: flex; gap: 8px; align-items: flex-start;
+  background: var(--blue-light); border: 1px solid #c0d4ec;
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  font-size: 12px; color: var(--blue-dark); margin-bottom: 14px;
+}
+
+.test-result {
+  display: none; align-items: center; gap: 6px;
+  font-size: 12px; margin-top: 8px; padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+.test-result.show { display: flex; }
+.test-result.ok { background: var(--green-light); color: var(--green-dark); }
+.test-result.err { background: var(--red-light); color: var(--red); }
+
+.spinner {
+  width: 14px; height: 14px; border: 2px solid var(--border-mid);
+  border-top-color: var(--orange); border-radius: 50%;
+  animation: spin 0.6s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─ Credits / Topup View ─ */
+.credits-top {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px;
+}
+
+.stat-label { font-size: 12px; color: var(--text-3); margin-bottom: 6px; font-weight: 500; }
+.stat-value {
+  font-family: 'Poppins', sans-serif;
+  font-size: 26px; font-weight: 700; color: var(--text-1);
+  line-height: 1; margin-bottom: 4px;
+}
+.stat-value .unit { font-size: 14px; font-weight: 400; color: var(--text-3); margin-left: 3px; }
+.stat-sub { font-size: 11.5px; color: var(--text-3); }
+
+.stat-card.highlight { background: var(--orange-light); border-color: var(--orange-mid); }
+.stat-card.highlight .stat-label { color: var(--orange-dark); }
+.stat-card.highlight .stat-value { color: var(--orange-dark); }
+
+.topup-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px; font-weight: 600; margin-bottom: 14px;
+}
+
+.pkg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+
+.pkg-card {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 16px;
+  text-align: center; cursor: pointer; transition: all 0.16s;
+  position: relative;
+}
+
+.pkg-card:hover { border-color: var(--border-dark); box-shadow: 0 3px 14px rgba(0,0,0,0.06); }
+.pkg-card.selected { border-color: var(--orange); background: var(--orange-light); }
+.pkg-card.popular { border-color: var(--orange); }
+
+.pkg-badge {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  background: var(--orange); color: #fff;
+  font-size: 10px; font-weight: 600; padding: 2px 10px;
+  border-radius: 20px; white-space: nowrap;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pkg-credits {
+  font-family: 'Poppins', sans-serif;
+  font-size: 22px; font-weight: 700; color: var(--text-1);
+  margin-bottom: 2px;
+}
+
+.pkg-credits span { font-size: 12px; font-weight: 400; color: var(--text-3); }
+.pkg-price { font-size: 18px; font-weight: 600; color: var(--orange); margin-bottom: 2px; }
+.pkg-per { font-size: 11px; color: var(--text-3); }
+
+.model-table-wrap {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+
+.model-table-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+
+.model-table-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px; font-weight: 600;
+}
+
+table.price-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+
+.price-table th {
+  text-align: left; padding: 10px 20px;
+  font-size: 11.5px; font-weight: 500;
+  color: var(--text-3); background: var(--bg-app);
+  border-bottom: 1px solid var(--border);
+}
+
+.price-table td {
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+}
+
+.price-table tr:last-child td { border-bottom: none; }
+.price-table tr:hover td { background: var(--bg-hover); }
+
+.model-name { font-weight: 500; color: var(--text-1); display: flex; align-items: center; gap: 7px; }
+
+.model-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.tier-badge {
+  font-size: 10.5px; padding: 2px 7px; border-radius: 4px; font-weight: 500;
+}
+.tier-fast { background: var(--green-light); color: var(--green-dark); }
+.tier-pro { background: var(--blue-light); color: var(--blue-dark); }
+.tier-ultra { background: var(--orange-light); color: var(--orange-dark); }
+
+.credit-cost { font-family: 'DM Mono', monospace; font-size: 12.5px; color: var(--text-1); font-weight: 500; }
+
+.pay-panel {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 24px;
+  display: flex;
+  flex-direction: column; align-items: center;
+  text-align: center;
+}
+
+.pay-panel-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px; font-weight: 600; margin-bottom: 4px;
+}
+
+.pay-panel-sub { font-size: 12px; color: var(--text-3); margin-bottom: 18px; }
+
+.pay-methods {
+  display: flex; gap: 8px; margin-bottom: 18px;
+}
+
+.pay-method {
+  padding: 6px 16px; border-radius: var(--radius-sm);
+  font-size: 12.5px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border-mid); background: var(--bg-surface);
+  color: var(--text-2); transition: all 0.14s;
+}
+
+.pay-method.active { border-color: var(--orange); background: var(--orange-light); color: var(--orange-dark); }
+
+.qr-frame {
+  width: 148px; height: 148px; background: #fff;
+  border-radius: 10px; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px; overflow: hidden;
+  position: relative;
+}
+
+.qr-overlay {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.92);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+}
+.qr-overlay.show { display: flex; }
+
+.pay-total {
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px; font-weight: 700; color: var(--orange); margin-bottom: 3px;
+}
+
+.pay-receive { font-size: 12px; color: var(--text-3); margin-bottom: 16px; }
+
+/* ─ Record list ─ */
+.record-list {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+
+.record-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.record-item:last-child { border-bottom: none; }
+.record-item:hover { background: var(--bg-hover); }
+
+.record-date { color: var(--text-3); font-size: 12px; }
+.record-amount { font-weight: 600; color: var(--orange); }
+.record-status {
+  font-size: 11px; padding: 2px 8px; border-radius: 20px;
+  font-weight: 500;
+}
+.record-status.ok { background: var(--green-light); color: var(--green-dark); }
+
+/* ─ Settings ─ */
+.setting-group { margin-bottom: 24px; }
+
+.setting-group-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-2); margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 6px;
+}
+
+.setting-info .s-name { font-size: 13.5px; font-weight: 500; color: var(--text-1); margin-bottom: 2px; }
+.setting-info .s-desc { font-size: 12px; color: var(--text-3); }
+
+.toggle {
+  width: 38px; height: 21px; border-radius: 11px;
+  background: var(--border-mid); position: relative;
+  cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+}
+
+.toggle.on { background: var(--orange); }
+.toggle::after {
+  content: ''; position: absolute;
+  width: 15px; height: 15px; background: #fff;
+  border-radius: 50%; top: 3px; left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(17px); }
+
+/* ─ Modal ─ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(20,20,19,0.45);
+  display: none; align-items: center; justify-content: center;
+  z-index: 1000; backdrop-filter: blur(2px);
+}
+.modal-overlay.show { display: flex; }
+
+.modal-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 24px;
+  width: 360px; max-width: 90vw;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+.modal-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px; font-weight: 600; margin-bottom: 6px;
+}
+.modal-body {
+  font-size: 13.5px; color: var(--text-2); line-height: 1.7;
+  margin-bottom: 20px;
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ─ Toast ─ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--text-1); color: var(--bg-surface);
+  padding: 11px 18px; border-radius: var(--radius);
+  font-size: 13px; display: flex; align-items: center; gap: 9px;
+  opacity: 0; transform: translateY(8px);
+  transition: all 0.25s; z-index: 999;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-ic { width: 18px; height: 18px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-dark); }
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="34" height="34" rx="9" fill="#faf9f5" stroke="#e4e1d8"/>
+        <defs>
+          <linearGradient id="pg" x1="5" y1="8" x2="29" y2="28" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#6a9bcc"/>
+            <stop offset="50%" stop-color="#d97757"/>
+            <stop offset="100%" stop-color="#788c5d"/>
+          </linearGradient>
+        </defs>
+        <polygon points="17,7 27,24 7,24" fill="none" stroke="url(#pg)" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="27" y1="24" x2="31" y2="18" stroke="#6a9bcc" stroke-width="1.5" opacity="0.8"/>
+        <line x1="27" y1="24" x2="31" y2="22" stroke="#9bb8d9" stroke-width="1.5" opacity="0.6"/>
+        <line x1="27" y1="24" x2="31" y2="26" stroke="#d97757" stroke-width="1.5" opacity="0.8"/>
+        <line x1="27" y1="24" x2="30" y2="29" stroke="#788c5d" stroke-width="1.5" opacity="0.6"/>
+        <line x1="3" y1="13" x2="17" y2="13" stroke="#141413" stroke-width="1" opacity="0.1"/>
+        <line x1="17" y1="13" x2="27" y2="24" stroke="#141413" stroke-width="1" opacity="0.1"/>
+      </svg>
+      <div class="logo-text">
+        <div class="name">Prism</div>
+        <div class="tagline">Claude Code 增强工具</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-label">开始使用</div>
+    <div class="nav-item active" onclick="go('download')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      下载安装
+    </div>
+    <div class="nav-item" onclick="go('setup')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      初始化配置
+    </div>
+
+    <div class="nav-label">模型接入</div>
+    <div class="nav-item" onclick="go('byok')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      自带密钥 BYOK
+    </div>
+    <div class="nav-item" onclick="go('credits')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      充值中心
+      <span class="nav-badge">Pro</span>
+    </div>
+
+    <div class="nav-label">系统</div>
+    <div class="nav-item" onclick="go('settings')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      偏好设置
+    </div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="balance-pill" onclick="go('credits')">
+      <div>
+        <div class="balance-label">账户余额</div>
+        <div class="balance-amount" id="sideBalance">¥ 28.50 <span>credits</span></div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-3);"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="topup-btn" onclick="go('credits')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      立即充值
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">下载安装</div>
+      <div class="page-sub" id="pageSub">选择适合您系统的版本，一键完成安装</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="toast('帮助文档开发中')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        帮助文档
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="toast('反馈功能开发中')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        反馈
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════ DOWNLOAD VIEW ══════ -->
+    <div class="view active" id="view-download">
+      <div class="dl-hero">
+        <div class="dl-hero-title">下载 Prism</div>
+        <div class="dl-hero-sub">适用于国内开发者的 Claude Code 图形化管理工具，无需命令行，开箱即用</div>
+        <div class="version-chip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          最新版 v0.2.1 · 2025-05-06 发布
+        </div>
+      </div>
+
+      <div class="os-grid">
+        <div class="os-card primary-os" onclick="simulateDl('macOS')">
+          <div class="os-recommend">推荐</div>
+          <div class="os-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="M15 8.5c-.828 0-1.5.448-2 1-.5-.552-1.172-1-2-1C9.343 8.5 8 9.843 8 11.5c0 2.5 4 5.5 4 5.5s4-3 4-5.5C16 9.843 14.657 8.5 13 8.5z" fill="var(--text-2)" stroke="none" opacity="0.15"/><path d="M15 9c-1 0-1.8.6-2.3 1.2-.1.1-.3.1-.4 0C11.8 9.6 11 9 10 9 8.9 9 8 9.9 8 11c0 2.2 4 5 4 5s4-2.8 4-5c0-1.1-.9-2-2-2z" fill="var(--text-1)"/></svg>
+          </div>
+          <div class="os-name">macOS</div>
+          <div class="os-arch">Apple Silicon & Intel · DMG</div>
+          <button class="btn btn-primary" style="width:100%; justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载 .dmg
+          </button>
+          <div class="os-size">82.4 MB · macOS 12+</div>
+        </div>
+
+        <div class="os-card" onclick="simulateDl('Windows')">
+          <div class="os-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--text-2)"><path d="M3 5.557L10.373 4.5V11.5H3V5.557zM11.373 4.357L21 3V11.5H11.373V4.357zM3 12.5H10.373V19.5L3 18.443V12.5zM11.373 12.5H21V21L11.373 19.643V12.5z"/></svg>
+          </div>
+          <div class="os-name">Windows</div>
+          <div class="os-arch">x64 · NSIS 安装程序</div>
+          <button class="btn btn-outline-primary" style="width:100%; justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载 .exe
+          </button>
+          <div class="os-size">74.1 MB · Windows 10+</div>
+        </div>
+
+        <div class="os-card" onclick="simulateDl('Linux')">
+          <div class="os-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </div>
+          <div class="os-name">Linux</div>
+          <div class="os-arch">x64 · AppImage / .deb</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline-primary btn-sm" style="flex:1; justify-content:center;">AppImage</button>
+            <button class="btn btn-ghost btn-sm" style="flex:1; justify-content:center;">.deb</button>
+          </div>
+          <div class="os-size">78.6 MB · Ubuntu 20.04+</div>
+        </div>
+      </div>
+
+      <div class="dl-info-row">
+        <div class="dl-info-cell"><div class="label">最新版本</div><div class="value">v0.2.1</div></div>
+        <div class="dl-info-cell"><div class="label">Claude Code 内核</div><div class="value">v1.1.7</div></div>
+        <div class="dl-info-cell"><div class="label">更新日期</div><div class="value">2025-05-06</div></div>
+        <div class="dl-info-cell"><div class="label">开源协议</div><div class="value">MIT</div></div>
+      </div>
+
+      <div class="card" style="display:flex; gap:28px; align-items:flex-start;">
+        <div style="flex:1;">
+          <div style="font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:600; margin-bottom:10px;">安装说明</div>
+          <div style="font-size:13px; color:var(--text-2); line-height:2;">
+            <p><strong style="color:var(--text-1);">macOS：</strong>打开 .dmg，将 Prism 拖入应用程序文件夹，首次启动时右键选择「打开」</p>
+            <p style="margin-top:6px;"><strong style="color:var(--text-1);">Windows：</strong>双击 .exe 安装程序，按向导完成安装，会自动创建桌面快捷方式</p>
+            <p style="margin-top:6px;"><strong style="color:var(--text-1);">Linux：</strong>AppImage 直接运行无需安装；.deb 通过 <code style="font-family:'DM Mono',monospace; font-size:11.5px; background:var(--bg-app); padding:1px 5px; border-radius:3px;">dpkg -i</code> 安装</p>
+          </div>
+        </div>
+        <div style="flex:1; border-left:1px solid var(--border); padding-left:28px;">
+          <div style="font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:600; margin-bottom:10px;">系统要求</div>
+          <div style="font-size:13px; color:var(--text-2); line-height:2;">
+            <p>• Node.js ≥ 18（Prism 可自动安装）</p>
+            <p>• 内存 ≥ 4GB，硬盘空间 ≥ 500MB</p>
+            <p>• 网络连接（国内网络，无需科学上网）</p>
+            <p>• 无需 Anthropic 账号即可使用国产模型</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ SETUP VIEW ══════ -->
+    <div class="view" id="view-setup">
+      <div class="sec-head">
+        <div class="sec-title">初始化配置</div>
+        <div class="sec-desc">Prism 将自动完成环境检测与 Claude Code 安装，全程无需任何命令行操作</div>
+      </div>
+
+      <div class="steps-row" id="setupSteps">
+        <div class="step done" data-step="1"><div class="step-circle">✓</div><div class="step-name">环境检测</div></div>
+        <div class="step active" data-step="2"><div class="step-circle">2</div><div class="step-name">安装依赖</div></div>
+        <div class="step" data-step="3"><div class="step-circle">3</div><div class="step-name">写入配置</div></div>
+        <div class="step" data-step="4"><div class="step-circle">4</div><div class="step-name">完成</div></div>
+      </div>
+
+      <div class="check-grid" id="checkGrid">
+        <div class="check-card ok" id="chk-node">
+          <div class="check-top">
+            <div class="check-ic ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="check-badge ok">已就绪</span>
+          </div>
+          <div class="check-name">Node.js</div>
+          <div class="check-detail">v22.3.0 已安装 · 版本符合要求</div>
+        </div>
+        <div class="check-card running" id="chk-claude">
+          <div class="check-top">
+            <div class="check-ic running"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <span class="check-badge running">安装中</span>
+          </div>
+          <div class="check-name">Claude Code</div>
+          <div class="check-detail">腾讯 npm 镜像 · 2.4 MB/s</div>
+        </div>
+        <div class="check-card wait" id="chk-login">
+          <div class="check-top">
+            <div class="check-ic wait"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+            <span class="check-badge wait">等待中</span>
+          </div>
+          <div class="check-name">跳过强制登录</div>
+          <div class="check-detail">安装完成后自动写入配置</div>
+        </div>
+      </div>
+
+      <div class="prog-wrap"><div class="prog-fill" id="pf" style="width:48%"></div></div>
+
+      <div class="terminal" id="setupTerminal">
+        <div class="term-header">
+          <div class="term-dot td-r"></div><div class="term-dot td-y"></div><div class="term-dot td-g"></div>
+          <span class="term-label">安装日志</span>
+        </div>
+        <div class="tl info">› 检测系统运行环境...</div>
+        <div class="tl ok">› ✓ Node.js v22.3.0 · 符合要求</div>
+        <div class="tl info">› 切换 npm 源 → registry.npmmirror.com</div>
+        <div class="tl ok">› ✓ 镜像源配置成功</div>
+        <div class="tl info">› 安装 @anthropic-ai/claude-code@1.1.7...</div>
+        <div class="tl warn" id="log-cur">› ⠸ 下载中 [██████████░░░░░░░░░░] 48%</div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center;" id="setupActions">
+        <button class="btn btn-primary" onclick="runInstall()" id="btnInstall">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          继续安装
+        </button>
+        <button class="btn btn-ghost" onclick="resetSetup()">重置</button>
+        <span style="font-size:12px; color:var(--text-3);" id="setupEta">预计剩余 28 秒</span>
+      </div>
+    </div>
+
+    <!-- ══════ BYOK VIEW ══════ -->
+    <div class="view" id="view-byok">
+      <div class="sec-head">
+        <div class="sec-title">自带密钥模式</div>
+        <div class="sec-desc">填入任意 OpenAI 兼容 API Key，直连国内外主流大模型，完全免费</div>
+      </div>
+
+      <div class="byok-layout">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title" style="font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:7px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+              选择模型提供商
+            </div>
+
+            <div class="model-tabs">
+              <div class="model-tab active" id="tab-cn" onclick="switchTab('cn')">🇨🇳 国产模型</div>
+              <div class="model-tab" id="tab-intl" onclick="switchTab('intl')">🌐 国际模型</div>
+            </div>
+
+            <div class="provider-list" id="cn-list">
+              <div class="provider-row selected" onclick="pickProv(this,'https://api.siliconflow.cn/v1','Qwen/Qwen2.5-72B-Instruct')">
+                <div class="prov-dot" style="background:#1a8a5a;"></div>
+                <div style="flex:1;"><div class="prov-name">硅基流动 SiliconFlow</div><div class="prov-model">Qwen、DeepSeek、GLM 等多模型</div></div>
+                <span class="prov-tag cn">国内</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'https://api.moonshot.cn/v1','moonshot-v1-8k')">
+                <div class="prov-dot" style="background:#6a4fc8;"></div>
+                <div style="flex:1;"><div class="prov-name">月之暗面 Kimi</div><div class="prov-model">moonshot-v1-8k / 32k / 128k</div></div>
+                <span class="prov-tag cn">国内</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'https://open.bigmodel.cn/api/paas/v4','glm-4')">
+                <div class="prov-dot" style="background:#2264e8;"></div>
+                <div style="flex:1;"><div class="prov-name">智谱 AI</div><div class="prov-model">GLM-4 / GLM-4-Flash</div></div>
+                <span class="prov-tag cn">国内</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'https://api.deepseek.com/v1','deepseek-chat')">
+                <div class="prov-dot" style="background:#c05a20;"></div>
+                <div style="flex:1;"><div class="prov-name">深度求索 DeepSeek</div><div class="prov-model">deepseek-chat / deepseek-reasoner</div></div>
+                <span class="prov-tag cn">国内</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'','')">
+                <div class="prov-dot" style="background:var(--text-4);"></div>
+                <div style="flex:1;"><div class="prov-name">自定义端点</div><div class="prov-model">任意 OpenAI 兼容 API</div></div>
+                <span class="prov-tag cn">通用</span>
+              </div>
+            </div>
+
+            <div class="provider-list" id="intl-list" style="display:none;">
+              <div class="provider-row" onclick="pickProv(this,'https://api.openai.com/v1','gpt-4o')">
+                <div class="prov-dot" style="background:#1a7a3a;"></div>
+                <div style="flex:1;"><div class="prov-name">OpenAI</div><div class="prov-model">GPT-4o / GPT-4o-mini / o1</div></div>
+                <span class="prov-tag intl">国际</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'https://generativelanguage.googleapis.com/v1beta/openai','gemini-2.0-flash')">
+                <div class="prov-dot" style="background:#4285f4;"></div>
+                <div style="flex:1;"><div class="prov-name">Google Gemini</div><div class="prov-model">Gemini 2.0 Flash / Pro</div></div>
+                <span class="prov-tag intl">国际</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'https://api.groq.com/openai/v1','llama-3.3-70b-versatile')">
+                <div class="prov-dot" style="background:#f97316;"></div>
+                <div style="flex:1;"><div class="prov-name">Groq</div><div class="prov-model">Llama 3.3 70B · 超高速推理</div></div>
+                <span class="prov-tag intl">国际</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'https://api.mistral.ai/v1','mistral-large-latest')">
+                <div class="prov-dot" style="background:#ff7000;"></div>
+                <div style="flex:1;"><div class="prov-name">Mistral AI</div><div class="prov-model">Mistral Large / Codestral</div></div>
+                <span class="prov-tag intl">国际</span>
+              </div>
+              <div class="provider-row" onclick="pickProv(this,'','')">
+                <div class="prov-dot" style="background:var(--text-4);"></div>
+                <div style="flex:1;"><div class="prov-name">自定义端点</div><div class="prov-model">任意 OpenAI 兼容 API</div></div>
+                <span class="prov-tag intl">通用</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:600; margin-bottom:12px;">填写凭据</div>
+            <div class="form-group">
+              <label class="form-label">Base URL</label>
+              <input class="form-input mono" id="bUrl" value="https://api.siliconflow.cn/v1" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">API Key</label>
+              <div class="password-wrap">
+                <input class="form-input mono" id="aKey" type="password" placeholder="sk-xxxxxxxxxxxxxxxxxxxx" oninput="updatePreview()">
+                <span class="pw-toggle" onclick="togglePw()" id="pwToggle">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">模型名称 <span style="color:var(--text-4); font-weight:400;">（可选）</span></label>
+              <input class="form-input" id="mName" placeholder="如 Qwen/Qwen2.5-72B-Instruct" value="Qwen/Qwen2.5-72B-Instruct" oninput="updatePreview()">
+            </div>
+            <div style="display:flex; gap:8px; align-items:flex-start;">
+              <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="saveByok()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                写入配置
+              </button>
+              <button class="btn btn-ghost" onclick="testConnection(this)">测试连接</button>
+            </div>
+            <div class="test-result" id="testRes"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div style="font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:600; margin-bottom:12px;">配置预览</div>
+            <div class="code-block">
+              <span class="cj-brace">{</span><br>
+              &nbsp;&nbsp;<span class="cj-key">"baseApiUrl"</span>: <span class="cj-str" id="prev-url">"https://api.siliconflow.cn/v1"</span>,<br>
+              &nbsp;&nbsp;<span class="cj-key">"apiKey"</span>: <span class="cj-str" id="prev-key">"sk-••••••••••••"</span>,<br>
+              &nbsp;&nbsp;<span class="cj-key">"model"</span>: <span class="cj-str" id="prev-model">"Qwen/Qwen2.5-72B-Instruct"</span>,<br>
+              &nbsp;&nbsp;<span class="cj-key">"skipLogin"</span>: <span class="cj-bool">true</span>,<br>
+              &nbsp;&nbsp;<span class="cj-key">"apiKeyHelper"</span>: <span class="cj-bool">null</span><br>
+              <span class="cj-brace">}</span>
+            </div>
+            <div class="info-strip">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              写入 <code style="font-family:'DM Mono',monospace; font-size:11px;">~/.claude/config.json</code>，不影响其他软件
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:600; margin-bottom:10px;">隐私保障</div>
+            <div style="font-size:12.5px; color:var(--text-2); line-height:2.1;">
+              <p>• API Key 仅保存于<strong style="color:var(--text-1);">您的本地磁盘</strong></p>
+              <p>• Prism 不上传、不读取、不转发您的密钥</p>
+              <p>• 请求直接由 Claude Code 发往对应服务商</p>
+              <p>• 可随时在设置中清除所有本地配置</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ CREDITS VIEW ══════ -->
+    <div class="view" id="view-credits">
+      <div class="sec-head">
+        <div class="sec-title">充值中心</div>
+        <div class="sec-desc">充值 Prism Credits，按实际使用量扣费，支持国内外全部主流模型</div>
+      </div>
+
+      <div class="credits-top">
+        <div class="stat-card highlight">
+          <div class="stat-label">当前余额</div>
+          <div class="stat-value" id="statBalance">28.50 <span>元</span></div>
+          <div class="stat-sub">约可使用 Qwen2.5-72B 约 57 万 tokens</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">本月消耗</div>
+          <div class="stat-value" id="statConsume">12.34 <span>元</span></div>
+          <div class="stat-sub">DeepSeek-R1 占 68%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">累计充值</div>
+          <div class="stat-value" id="statTotal">100 <span>元</span></div>
+          <div class="stat-sub" id="statCount">共充值 3 次</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;">
+        <div>
+          <div class="topup-title">选择充值套餐</div>
+          <div class="pkg-grid">
+            <div class="pkg-card" onclick="selPkg(this,'10','10')">
+              <div class="pkg-credits">¥10 <span>体验包</span></div>
+              <div class="pkg-price">¥10</div>
+              <div class="pkg-per">≈ 入门体验</div>
+            </div>
+            <div class="pkg-card popular selected" onclick="selPkg(this,'30','30')">
+              <div class="pkg-badge">最受欢迎</div>
+              <div class="pkg-credits">¥30 <span>标准包</span></div>
+              <div class="pkg-price">¥30</div>
+              <div class="pkg-per">性价比之选</div>
+            </div>
+            <div class="pkg-card" onclick="selPkg(this,'100','98')">
+              <div class="pkg-credits">¥100 <span>专业包</span></div>
+              <div class="pkg-price">¥98 <span style="font-size:11px; color:var(--text-3); font-weight:400;">省2元</span></div>
+              <div class="pkg-per">省 2%</div>
+            </div>
+            <div class="pkg-card" onclick="selPkg(this,'300','285')">
+              <div class="pkg-credits">¥300 <span>旗舰包</span></div>
+              <div class="pkg-price">¥285 <span style="font-size:11px; color:var(--text-3); font-weight:400;">省15元</span></div>
+              <div class="pkg-per">省 5%</div>
+            </div>
+          </div>
+
+          <div class="model-table-wrap">
+            <div class="model-table-head">
+              <div class="model-table-title">模型价格一览</div>
+              <span style="font-size:11.5px; color:var(--text-3);">按实际 token 用量扣费</span>
+            </div>
+            <table class="price-table">
+              <thead><tr><th style="width:36%;">模型</th><th>类型</th><th>输入 / 1M tokens</th><th>输出 / 1M tokens</th><th>速度</th></tr></thead>
+              <tbody>
+                <tr><td><div class="model-name"><div class="model-dot" style="background:#1a8a5a;"></div>DeepSeek-R1</div></td><td><span class="tier-badge tier-pro">推理</span></td><td><span class="credit-cost">¥ 0.04</span></td><td><span class="credit-cost">¥ 0.16</span></td><td style="color:var(--text-3); font-size:12px;">中速</td></tr>
+                <tr><td><div class="model-name"><div class="model-dot" style="background:#1a5a8a;"></div>DeepSeek-V3</div></td><td><span class="tier-badge tier-fast">对话</span></td><td><span class="credit-cost">¥ 0.027</span></td><td><span class="credit-cost">¥ 0.27</span></td><td style="color:var(--text-3); font-size:12px;">快速</td></tr>
+                <tr><td><div class="model-name"><div class="model-dot" style="background:#6a4fc8;"></div>Qwen2.5-72B</div></td><td><span class="tier-badge tier-fast">对话</span></td><td><span class="credit-cost">¥ 0.04</span></td><td><span class="credit-cost">¥ 0.04</span></td><td style="color:var(--text-3); font-size:12px;">快速</td></tr>
+                <tr><td><div class="model-name"><div class="model-dot" style="background:#c05a20;"></div>Kimi k1.5</div></td><td><span class="tier-badge tier-pro">推理</span></td><td><span class="credit-cost">¥ 0.06</span></td><td><span class="credit-cost">¥ 0.18</span></td><td style="color:var(--text-3); font-size:12px;">中速</td></tr>
+                <tr><td><div class="model-name"><div class="model-dot" style="background:#1a7a3a;"></div>GPT-4o</div></td><td><span class="tier-badge tier-ultra">顶级</span></td><td><span class="credit-cost">¥ 0.18</span></td><td><span class="credit-cost">¥ 0.72</span></td><td style="color:var(--text-3); font-size:12px;">快速</td></tr>
+                <tr><td><div class="model-name"><div class="model-dot" style="background:#4285f4;"></div>Gemini 2.0 Flash</div></td><td><span class="tier-badge tier-fast">对话</span></td><td><span class="credit-cost">¥ 0.025</span></td><td><span class="credit-cost">¥ 0.10</span></td><td style="color:var(--text-3); font-size:12px;">极速</td></tr>
+                <tr><td><div class="model-name"><div class="model-dot" style="background:#d97757;"></div>Claude 3.7 Sonnet</div></td><td><span class="tier-badge tier-ultra">顶级</span></td><td><span class="credit-cost">¥ 0.22</span></td><td><span class="credit-cost">¥ 1.10</span></td><td style="color:var(--text-3); font-size:12px;">快速</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="topup-title" style="margin-top:28px;">充值记录</div>
+          <div class="record-list" id="recordList">
+            <div class="record-item"><span class="record-date">2025-05-05 14:32</span><span>微信支付 ¥30</span><span class="record-status ok">成功</span></div>
+            <div class="record-item"><span class="record-date">2025-04-28 09:15</span><span>支付宝 ¥50</span><span class="record-status ok">成功</span></div>
+            <div class="record-item"><span class="record-date">2025-04-12 21:08</span><span>微信支付 ¥20</span><span class="record-status ok">成功</span></div>
+          </div>
+        </div>
+
+        <div class="pay-panel">
+          <div class="pay-panel-title">确认充值</div>
+          <div class="pay-panel-sub">选择套餐后扫码完成支付</div>
+
+          <div class="pay-methods">
+            <div class="pay-method active" onclick="swPay(this)">微信支付</div>
+            <div class="pay-method" onclick="swPay(this)">支付宝</div>
+          </div>
+
+          <div class="qr-frame">
+            <svg width="132" height="132" viewBox="0 0 132 132" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="6" width="34" height="34" rx="4" fill="#141413"/><rect x="11" y="11" width="24" height="24" rx="3" fill="white"/><rect x="16" y="16" width="14" height="14" rx="2" fill="#141413"/>
+              <rect x="92" y="6" width="34" height="34" rx="4" fill="#141413"/><rect x="97" y="11" width="24" height="24" rx="3" fill="white"/><rect x="102" y="16" width="14" height="14" rx="2" fill="#141413"/>
+              <rect x="6" y="92" width="34" height="34" rx="4" fill="#141413"/><rect x="11" y="97" width="24" height="24" rx="3" fill="white"/><rect x="16" y="102" width="14" height="14" rx="2" fill="#141413"/>
+              <rect x="48" y="6" width="5" height="5" fill="#141413"/><rect x="58" y="6" width="5" height="5" fill="#141413"/><rect x="68" y="6" width="5" height="5" fill="#141413"/><rect x="78" y="6" width="5" height="5" fill="#141413"/>
+              <rect x="53" y="12" width="5" height="5" fill="#141413"/><rect x="73" y="12" width="5" height="5" fill="#141413"/>
+              <rect x="48" y="18" width="5" height="5" fill="#141413"/><rect x="63" y="18" width="5" height="5" fill="#141413"/><rect x="78" y="18" width="5" height="5" fill="#141413"/><rect x="58" y="24" width="5" height="5" fill="#141413"/>
+              <rect x="68" y="24" width="5" height="5" fill="#141413"/><rect x="48" y="30" width="5" height="5" fill="#141413"/><rect x="58" y="30" width="5" height="5" fill="#141413"/><rect x="73" y="30" width="5" height="5" fill="#141413"/>
+              <rect x="6" y="48" width="5" height="5" fill="#141413"/><rect x="16" y="48" width="5" height="5" fill="#141413"/><rect x="26" y="48" width="5" height="5" fill="#141413"/><rect x="6" y="58" width="5" height="5" fill="#141413"/>
+              <rect x="21" y="58" width="5" height="5" fill="#141413"/><rect x="11" y="64" width="5" height="5" fill="#141413"/><rect x="6" y="70" width="5" height="5" fill="#141413"/><rect x="26" y="70" width="5" height="5" fill="#141413"/>
+              <rect x="16" y="78" width="5" height="5" fill="#141413"/><rect x="6" y="80" width="5" height="5" fill="#141413"/>
+              <rect x="48" y="48" width="5" height="5" fill="#141413"/><rect x="58" y="48" width="5" height="5" fill="#141413"/><rect x="73" y="48" width="5" height="5" fill="#141413"/><rect x="83" y="48" width="5" height="5" fill="#141413"/>
+              <rect x="53" y="58" width="5" height="5" fill="#141413"/><rect x="68" y="58" width="5" height="5" fill="#141413"/><rect x="48" y="64" width="5" height="5" fill="#141413"/><rect x="78" y="64" width="5" height="5" fill="#141413"/>
+              <rect x="63" y="70" width="5" height="5" fill="#141413"/><rect x="83" y="75" width="5" height="5" fill="#141413"/><rect x="53" y="78" width="5" height="5" fill="#141413"/><rect x="73" y="78" width="5" height="5" fill="#141413"/>
+              <rect x="92" y="48" width="5" height="5" fill="#141413"/><rect x="107" y="48" width="5" height="5" fill="#141413"/><rect x="121" y="48" width="5" height="5" fill="#141413"/><rect x="97" y="58" width="5" height="5" fill="#141413"/>
+              <rect x="112" y="58" width="5" height="5" fill="#141413"/><rect x="92" y="64" width="5" height="5" fill="#141413"/><rect x="121" y="68" width="5" height="5" fill="#141413"/><rect x="102" y="75" width="5" height="5" fill="#141413"/>
+              <rect x="116" y="78" width="5" height="5" fill="#141413"/><rect x="48" y="92" width="5" height="5" fill="#141413"/><rect x="63" y="92" width="5" height="5" fill="#141413"/><rect x="78" y="92" width="5" height="5" fill="#141413"/>
+              <rect x="53" y="102" width="5" height="5" fill="#141413"/><rect x="68" y="102" width="5" height="5" fill="#141413"/><rect x="83" y="107" width="5" height="5" fill="#141413"/><rect x="48" y="112" width="5" height="5" fill="#141413"/>
+              <rect x="73" y="112" width="5" height="5" fill="#141413"/><rect x="58" y="118" width="5" height="5" fill="#141413"/><rect x="78" y="121" width="5" height="5" fill="#141413"/><rect x="92" y="92" width="5" height="5" fill="#141413"/>
+              <rect x="107" y="97" width="5" height="5" fill="#141413"/><rect x="121" y="92" width="5" height="5" fill="#141413"/><rect x="97" y="107" width="5" height="5" fill="#141413"/><rect x="116" y="112" width="5" height="5" fill="#141413"/>
+              <rect x="92" y="118" width="5" height="5" fill="#141413"/><rect x="112" y="121" width="5" height="5" fill="#141413"/>
+            </svg>
+            <div class="qr-overlay" id="qrOverlay">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span style="font-size:13px; font-weight:600; color:var(--green-dark);">支付成功</span>
+            </div>
+          </div>
+
+          <div class="pay-total" id="payTot">¥ 30</div>
+          <div class="pay-receive" id="payRcv">到账余额 ¥30.00</div>
+
+          <button class="btn btn-primary btn-lg" style="width:100%; justify-content:center;" id="btnPay" onclick="doPay()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            确认支付 ¥30
+          </button>
+          <div style="font-size:11px; color:var(--text-4); margin-top:10px; line-height:1.7;">支付后余额实时到账<br>用量按 token 精确扣除，不足最小单位不扣</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ SETTINGS VIEW ══════ -->
+    <div class="view" id="view-settings">
+      <div class="sec-head">
+        <div class="sec-title">偏好设置</div>
+        <div class="sec-desc">自定义 Prism 的运行行为与界面偏好</div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-group-title">常规</div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="s-name">开机自启</div><div class="s-desc">登录系统后自动在后台运行 Prism</div></div>
+          <div class="toggle on" id="tog-autostart" onclick="toggleSetting(this,'autostart')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="s-name">自动更新</div><div class="s-desc">检测到新版本时自动下载，重启后生效</div></div>
+          <div class="toggle on" id="tog-autoupdate" onclick="toggleSetting(this,'autoupdate')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="s-name">桌面通知</div><div class="s-desc">余额不足、更新可用等重要事件推送通知</div></div>
+          <div class="toggle" id="tog-notify" onclick="toggleSetting(this,'notify')"></div>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-group-title">安装选项</div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="s-name">npm 镜像源</div><div class="s-desc">安装依赖时使用的国内镜像</div></div>
+          <select class="form-input" style="width:auto; padding:6px 10px; font-size:12.5px;" id="sel-mirror" onchange="saveSetting('mirror',this.value)">
+            <option value="npmmirror">腾讯 npmmirror</option>
+            <option value="cnpm">阿里 cnpm</option>
+            <option value="huawei">华为云</option>
+            <option value="official">官方源</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="s-name">跳过 Anthropic 登录</div><div class="s-desc">使用 BYOK 或充值模式时无需 Anthropic 账号</div></div>
+          <div class="toggle on" id="tog-skiplogin" onclick="toggleSetting(this,'skiplogin')"></div>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-group-title">账户与数据</div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="s-name">清除本地配置</div><div class="s-desc">删除所有 API Key 及 Claude Code 配置文件</div></div>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red); border-color:var(--red-light);" onclick="confirmClear()">清除</button>
+        </div>
+        <div class="setting-row" style="background:var(--bg-app);">
+          <div class="setting-info">
+            <div class="s-name" style="color:var(--text-3);">版本信息</div>
+            <div class="s-desc">Prism v0.2.1 · Claude Code v1.1.7 · Node.js v22.3.0</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="toast('当前已是最新版本 v0.2.1')">检查更新</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">确认</div>
+    <div class="modal-body" id="modalBody">确定要执行此操作吗？</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary btn-sm" id="modalConfirm" onclick="closeModal()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast">
+  <div class="toast-ic">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <span id="toast-msg">操作成功</span>
+</div>
+
+<script>
+/* ───────── Data / Storage ───────── */
+const Storage = {
+  get(k, def) { try { const v = localStorage.getItem('prism_'+k); return v ? JSON.parse(v) : def; } catch(e) { return def; } },
+  set(k, v) { localStorage.setItem('prism_'+k, JSON.stringify(v)); },
+};
+
+let data = {
+  balance: Storage.get('balance', 28.50),
+  consumed: Storage.get('consumed', 12.34),
+  totalRecharge: Storage.get('totalRecharge', 100),
+  rechargeCount: Storage.get('rechargeCount', 3),
+  records: Storage.get('records', [
+    {date:'2025-05-05 14:32', method:'微信支付', amount:30, status:'成功'},
+    {date:'2025-04-28 09:15', method:'支付宝', amount:50, status:'成功'},
+    {date:'2025-04-12 21:08', method:'微信支付', amount:20, status:'成功'},
+  ]),
+  settings: Storage.get('settings', {autostart:true, autoupdate:true, notify:false, mirror:'npmmirror', skiplogin:true}),
+  byok: Storage.get('byok', {url:'https://api.siliconflow.cn/v1', key:'', model:'Qwen/Qwen2.5-72B-Instruct'}),
+};
+
+function syncData() {
+  Storage.set('balance', data.balance);
+  Storage.set('consumed', data.consumed);
+  Storage.set('totalRecharge', data.totalRecharge);
+  Storage.set('rechargeCount', data.rechargeCount);
+  Storage.set('records', data.records);
+  Storage.set('settings', data.settings);
+  Storage.set('byok', data.byok);
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('sideBalance').innerHTML = `¥ ${data.balance.toFixed(2)} <span>credits</span>`;
+  document.getElementById('statBalance').innerHTML = `${data.balance.toFixed(2)} <span>元</span>`;
+  document.getElementById('statConsume').innerHTML = `${data.consumed.toFixed(2)} <span>元</span>`;
+  document.getElementById('statTotal').innerHTML = `${data.totalRecharge.toFixed(2)} <span>元</span>`;
+  document.getElementById('statCount').textContent = `共充值 ${data.rechargeCount} 次`;
+
+  const list = document.getElementById('recordList');
+  list.innerHTML = data.records.map(r =>
+    `<div class="record-item"><span class="record-date">${r.date}</span><span>${r.method} ¥${r.amount}</span><span class="record-status ok">${r.status}</span></div>`
+  ).join('');
+
+  // settings
+  const s = data.settings;
+  document.getElementById('tog-autostart').classList.toggle('on', s.autostart);
+  document.getElementById('tog-autoupdate').classList.toggle('on', s.autoupdate);
+  document.getElementById('tog-notify').classList.toggle('on', s.notify);
+  document.getElementById('tog-skiplogin').classList.toggle('on', s.skiplogin);
+  document.getElementById('sel-mirror').value = s.mirror;
+}
+
+/* ───────── Navigation ───────── */
+const pages = {
+  download: ['下载安装','选择适合您系统的版本，一键完成安装'],
+  setup:    ['初始化配置','自动检测环境，免除繁琐的手动配置'],
+  byok:     ['自带密钥 BYOK','填入 API Key，直连国内外主流大模型'],
+  credits:  ['充值中心','充值 Credits，按 token 用量精确扣费'],
+  settings: ['偏好设置','自定义 Prism 的运行行为与界面偏好'],
+};
+
+function go(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') === `go('${name}')`) n.classList.add('active');
+  });
+  document.getElementById('pageTitle').textContent = pages[name][0];
+  document.getElementById('pageSub').textContent = pages[name][1];
+  Storage.set('lastView', name);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ───────── Modal ───────── */
+let modalCallback = null;
+function showModal(title, body, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').textContent = body;
+  modalCallback = onConfirm;
+  const btn = document.getElementById('modalConfirm');
+  btn.onclick = () => { closeModal(); if (modalCallback) modalCallback(); };
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+/* ───────── Download ───────── */
+function simulateDl(os) { toast(`正在下载 Prism for ${os}...`); }
+
+/* ───────── Setup / Install ───────── */
+let installPhase = Storage.get('installPhase', 1); // 1=detected, 2=installing, 3=config, 4=done
+
+function setStep(n) {
+  document.querySelectorAll('.step').forEach((el, i) => {
+    const step = i + 1;
+    el.classList.remove('done','active');
+    if (step < n) el.classList.add('done');
+    else if (step === n) el.classList.add('active');
+  });
+}
+
+function setCheck(id, state, badge, detail) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'check-card ' + state;
+  const ic = el.querySelector('.check-ic'); ic.className = 'check-ic ' + state;
+  const bd = el.querySelector('.check-badge'); bd.className = 'check-badge ' + state; bd.textContent = badge;
+  if (detail) el.querySelector('.check-detail').textContent = detail;
+}
+
+function addTerm(cls, text) {
+  const term = document.getElementById('setupTerminal');
+  const d = document.createElement('div');
+  d.className = 'tl ' + cls; d.textContent = '› ' + text;
+  term.appendChild(d);
+  term.scrollTop = term.scrollHeight;
+}
+
+function runInstall() {
+  const btn = document.getElementById('btnInstall');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner" style="border-color:rgba(255,255,255,0.3); border-top-color:#fff;"></span> 安装中...`;
+
+  const pf = document.getElementById('pf');
+  const eta = document.getElementById('setupEta');
+  let prog = 48;
+
+  // Phase 2: finish install
+  setTimeout(() => {
+    setCheck('chk-claude', 'ok', '已就绪', 'v1.1.7 安装成功');
+    setCheck('chk-login', 'running', '配置中', '正在写入 skipLogin...');
+    setStep(3);
+    addTerm('ok', '✓ @anthropic-ai/claude-code@1.1.7 安装成功');
+    addTerm('info', '写入配置文件 ~/.claude/config.json...');
+    prog = 75; pf.style.width = prog + '%';
+  }, 1200);
+
+  setTimeout(() => {
+    addTerm('ok', '✓ skipLogin = true 写入完成');
+    addTerm('ok', '✓ baseApiUrl 配置完成');
+    prog = 92; pf.style.width = prog + '%';
+  }, 2200);
+
+  setTimeout(() => {
+    setCheck('chk-login', 'ok', '已完成', 'Claude Code 已就绪');
+    setStep(4);
+    addTerm('ok', '✓ 全部完成！Claude Code 已就绪');
+    prog = 100; pf.style.width = '100%';
+    eta.textContent = '安装完成';
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 已完成`;
+    btn.classList.remove('btn-primary'); btn.classList.add('btn-outline-primary');
+    toast('安装完成！Claude Code 已就绪');
+    installPhase = 4; Storage.set('installPhase', 4);
+  }, 3200);
+}
+
+function resetSetup() {
+  installPhase = 1;
+  Storage.set('installPhase', 1);
+  setStep(2);
+  setCheck('chk-node', 'ok', '已就绪', 'v22.3.0 已安装 · 版本符合要求');
+  setCheck('chk-claude', 'running', '安装中', '腾讯 npm 镜像 · 2.4 MB/s');
+  setCheck('chk-login', 'wait', '等待中', '安装完成后自动写入配置');
+  document.getElementById('pf').style.width = '48%';
+  document.getElementById('setupEta').textContent = '预计剩余 28 秒';
+  const btn = document.getElementById('btnInstall');
+  btn.disabled = false;
+  btn.classList.add('btn-primary'); btn.classList.remove('btn-outline-primary');
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> 继续安装`;
+  const term = document.getElementById('setupTerminal');
+  term.innerHTML = `
+    <div class="term-header">
+      <div class="term-dot td-r"></div><div class="term-dot td-y"></div><div class="term-dot td-g"></div>
+      <span class="term-label">安装日志</span>
+    </div>
+    <div class="tl info">› 检测系统运行环境...</div>
+    <div class="tl ok">› ✓ Node.js v22.3.0 · 符合要求</div>
+    <div class="tl info">› 切换 npm 源 → registry.npmmirror.com</div>
+    <div class="tl ok">› ✓ 镜像源配置成功</div>
+    <div class="tl info">› 安装 @anthropic-ai/claude-code@1.1.7...</div>
+    <div class="tl warn" id="log-cur">› ⠸ 下载中 [██████████░░░░░░░░░░] 48%</div>`;
+}
+
+/* ───────── BYOK ───────── */
+function switchTab(t) {
+  document.getElementById('tab-cn').classList.toggle('active', t === 'cn');
+  document.getElementById('tab-intl').classList.toggle('active', t === 'intl');
+  document.getElementById('cn-list').style.display = t === 'cn' ? '' : 'none';
+  document.getElementById('intl-list').style.display = t === 'intl' ? '' : 'none';
+}
+
+function pickProv(el, url, model) {
+  el.closest('.provider-list').querySelectorAll('.provider-row').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('bUrl').value = url;
+  document.getElementById('mName').value = model;
+  updatePreview();
+}
+
+function updatePreview() {
+  const url = document.getElementById('bUrl').value || '...';
+  const key = document.getElementById('aKey').value;
+  const model = document.getElementById('mName').value || '...';
+  document.getElementById('prev-url').textContent = '"' + url + '"';
+  document.getElementById('prev-key').textContent = '"' + (key ? maskKey(key) : 'sk-••••••••••••') + '"';
+  document.getElementById('prev-model').textContent = '"' + model + '"';
+}
+
+function maskKey(k) { return k.length > 8 ? k.slice(0,4) + '••••' + k.slice(-4) : '••••'; }
+
+function togglePw() {
+  const inp = document.getElementById('aKey');
+  const btn = document.getElementById('pwToggle');
+  const isPw = inp.type === 'password';
+  inp.type = isPw ? 'text' : 'password';
+  btn.innerHTML = isPw
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
+function testConnection(btn) {
+  const res = document.getElementById('testRes');
+  const key = document.getElementById('aKey').value;
+  if (!key) { toast('请先填写 API Key'); return; }
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> 测试中...`;
+  res.className = 'test-result';
+  setTimeout(() => {
+    btn.disabled = false; btn.textContent = '测试连接';
+    const ok = Math.random() > 0.1;
+    res.className = 'test-result show ' + (ok ? 'ok' : 'err');
+    res.innerHTML = ok
+      ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 连接成功 · ${Math.floor(Math.random()*150+50)}ms`
+      : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> 连接失败，请检查 Key 和 URL`;
+  }, 1500);
+}
+
+function saveByok() {
+  const key = document.getElementById('aKey').value;
+  if (!key) { toast('请先填写 API Key'); return; }
+  data.byok = {
+    url: document.getElementById('bUrl').value,
+    key: key,
+    model: document.getElementById('mName').value,
+  };
+  syncData();
+  toast('配置已写入，Claude Code 正在重启...');
+}
+
+/* ───────── Credits ───────── */
+let selAmt = 30;
+let selCredits = 30;
+function selPkg(el, credits, price) {
+  document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selAmt = parseInt(price);
+  selCredits = parseFloat(credits);
+  document.getElementById('payTot').textContent = '¥ ' + price;
+  document.getElementById('payRcv').textContent = '到账余额 ¥' + selCredits.toFixed(2);
+  const btn = document.getElementById('btnPay');
+  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> 确认支付 ¥${price}`;
+}
+
+function swPay(el) {
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function doPay() {
+  const btn = document.getElementById('btnPay');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner" style="border-color:rgba(255,255,255,0.3); border-top-color:#fff;"></span> 处理中...`;
+
+  setTimeout(() => {
+    document.getElementById('qrOverlay').classList.add('show');
+    setTimeout(() => {
+      document.getElementById('qrOverlay').classList.remove('show');
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> 确认支付 ¥${selAmt}`;
+
+      const method = document.querySelector('.pay-method.active').textContent;
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      data.balance += selCredits;
+      data.totalRecharge += selCredits;
+      data.rechargeCount += 1;
+      data.records.unshift({date:dateStr, method, amount:selCredits, status:'成功'});
+      syncData();
+      toast(`支付成功！¥${selCredits} 已充入账户`);
+    }, 2000);
+  }, 1200);
+}
+
+/* ───────── Settings ───────── */
+function toggleSetting(el, key) {
+  el.classList.toggle('on');
+  data.settings[key] = el.classList.contains('on');
+  syncData();
+}
+
+function saveSetting(key, val) {
+  data.settings[key] = val;
+  syncData();
+  toast('设置已保存');
+}
+
+function confirmClear() {
+  showModal('清除本地配置', '确定要删除所有 API Key 及 Claude Code 配置文件吗？此操作不可恢复。', () => {
+    data.byok = {url:'', key:'', model:''};
+    document.getElementById('aKey').value = '';
+    document.getElementById('bUrl').value = '';
+    document.getElementById('mName').value = '';
+    updatePreview();
+    syncData();
+    toast('配置已清除');
+  });
+}
+
+/* ───────── Init ───────── */
+updateUI();
+updatePreview();
+
+// restore view
+const lastView = Storage.get('lastView', 'download');
+if (lastView && lastView !== 'download') go(lastView);
+
+// restore BYOK inputs
+if (data.byok.url) document.getElementById('bUrl').value = data.byok.url;
+if (data.byok.key) document.getElementById('aKey').value = data.byok.key;
+if (data.byok.model) document.getElementById('mName').value = data.byok.model;
+updatePreview();
+</script>
+</body>
+</html>

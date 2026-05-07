@@ -1,0 +1,22 @@
+{
+  "name": "prism",
+  "private": true,
+  "scripts": {
+    "dev": "cd apps/web && npm run dev",
+    "build": "cd apps/web && npm run build",
+    "start": "cd apps/web && npm run start",
+    "build:desktop": "cd apps/web && npm run build && cd ../desktop && npm run build",
+    "dist:desktop": "npm run build:desktop && cd apps/desktop && npm run dist",
+    "dist:win": "npm run build:desktop && cd apps/desktop && npm run dist:win",
+    "dist:mac": "npm run build:desktop && cd apps/desktop && npm run dist:mac",
+    "dist:linux": "npm run build:desktop && cd apps/desktop && npm run dist:linux"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.31.10"
+  }
+}

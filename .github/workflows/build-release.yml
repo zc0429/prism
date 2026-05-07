@@ -1,0 +1,65 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to GitHub Releases'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: win
+          - os: macos-latest
+            target: mac
+          - os: ubuntu-latest
+            target: linux
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install web dependencies
+        run: cd apps/web && npm ci
+
+      - name: Install desktop dependencies
+        run: cd apps/desktop && npm ci
+
+      - name: Build Next.js (standalone)
+        run: cd apps/web && npm run build
+
+      - name: Compile Electron main process
+        run: cd apps/desktop && npm run build
+
+      - name: Build installer (no publish)
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == false
+        run: cd apps/desktop && npx electron-builder --${{ matrix.target }} --publish=never
+
+      - name: Build & publish installer
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish == true)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cd apps/desktop && npm run dist:${{ matrix.target }}

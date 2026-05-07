@@ -1,0 +1,26 @@
+{
+  "name": "prism-desktop",
+  "version": "0.2.1",
+  "private": true,
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc && electron .",
+    "dist": "tsc && electron-builder",
+    "dist:win": "tsc && electron-builder --win",
+    "dist:mac": "tsc && electron-builder --mac",
+    "dist:linux": "tsc && electron-builder --linux"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "electron-updater": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/jimp": "^0.2.1",
+    "@types/node": "^20",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.0",
+    "jimp": "^1.6.1",
+    "typescript": "^5"
+  }
+}
