@@ -7,6 +7,23 @@ export interface ServerProcess {
   process: ChildProcess
 }
 
+/** Safe logger that won't crash on missing stdout (packaged Windows GUI) */
+function safeLog(...args: unknown[]): void {
+  try {
+    console.log(...args)
+  } catch {
+    // ignore EPIPE in packaged app
+  }
+}
+
+function safeError(...args: unknown[]): void {
+  try {
+    console.error(...args)
+  } catch {
+    // ignore EPIPE in packaged app
+  }
+}
+
 export async function startNextServer(): Promise<ServerProcess> {
   const port = 3456
 
@@ -22,15 +39,27 @@ export async function startNextServer(): Promise<ServerProcess> {
   })
 
   serverProcess.stdout?.on('data', (data: Buffer) => {
-    console.log('[Next.js]', data.toString().trim())
+    safeLog('[Next.js]', data.toString().trim())
+  })
+
+  serverProcess.stdout?.on('error', () => {
+    // stdout pipe broken — ignore
   })
 
   serverProcess.stderr?.on('data', (data: Buffer) => {
-    console.error('[Next.js]', data.toString().trim())
+    safeError('[Next.js]', data.toString().trim())
+  })
+
+  serverProcess.stderr?.on('error', () => {
+    // stderr pipe broken — ignore
   })
 
   serverProcess.on('exit', (code) => {
-    console.log(`[Next.js] Server exited with code ${code}`)
+    safeLog(`[Next.js] Server exited with code ${code}`)
+  })
+
+  serverProcess.on('error', (err) => {
+    safeError('[Next.js] Spawn error:', err.message)
   })
 
   // Wait for server to be ready
