@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { execSync, exec } from 'child_process'
+import { execSync, execFileSync } from 'child_process'
 import fs from 'fs'
 import fsp from 'fs/promises'
 import path from 'path'
@@ -12,6 +12,14 @@ const NODE_INSTALL_DIR = path.join(PRISM_HOME, 'node')
 
 function execWithTimeout(command: string, timeoutMs = 10000): string {
   return execSync(command, {
+    encoding: 'utf-8',
+    timeout: timeoutMs,
+    windowsHide: true,
+  }).trim()
+}
+
+function execFileWithTimeout(file: string, args: string[], timeoutMs = 10000): string {
+  return execFileSync(file, args, {
     encoding: 'utf-8',
     timeout: timeoutMs,
     windowsHide: true,
@@ -32,25 +40,25 @@ export function registerInstallerIpc(): void {
     }
 
     try {
-      result.nodeVersion = execWithTimeout('node -v')
+      result.nodeVersion = execFileWithTimeout('node', ['-v'])
     } catch {
       result.errors.push('未检测到 Node.js')
     }
 
     try {
-      result.npmVersion = execWithTimeout('npm -v')
+      result.npmVersion = execFileWithTimeout('npm', ['-v'])
     } catch {
       result.errors.push('未检测到 npm')
     }
 
     try {
-      result.npmRegistry = execWithTimeout('npm config get registry')
+      result.npmRegistry = execFileWithTimeout('npm', ['config', 'get', 'registry'])
     } catch {
       // ignore
     }
 
     try {
-      result.claudeVersion = execWithTimeout('claude --version')
+      result.claudeVersion = execFileWithTimeout('claude', ['--version'])
       result.claudeInstalled = true
     } catch {
       result.claudeInstalled = false
@@ -89,13 +97,18 @@ export function registerInstallerIpc(): void {
 
     // Extract
     if (platform === 'win32') {
-      // Use PowerShell to extract zip
-      execSync(
-        `powershell -command "Expand-Archive -Path '${downloadPath}' -DestinationPath '${PRISM_HOME}' -Force"`,
-        { windowsHide: true },
-      )
+      // Use PowerShell to extract zip (参数化传递，避免命令注入)
+      execFileSync('powershell', [
+        '-command',
+        'Expand-Archive',
+        '-Path',
+        downloadPath,
+        '-DestinationPath',
+        PRISM_HOME,
+        '-Force',
+      ], { windowsHide: true })
     } else {
-      execSync(`tar -xzf "${downloadPath}" -C "${PRISM_HOME}"`, { windowsHide: true })
+      execFileSync('tar', ['-xzf', downloadPath, '-C', PRISM_HOME], { windowsHide: true })
     }
 
     // Move extracted folder to standard location
@@ -111,7 +124,7 @@ export function registerInstallerIpc(): void {
 
   // ── 安装 Claude Code ────────────────────────────────────────
   ipcMain.handle('installer:install-claude', async () => {
-    execSync('npm install -g @anthropic-ai/claude-code', {
+    execFileSync('npm', ['install', '-g', '@anthropic-ai/claude-code'], {
       stdio: 'inherit',
       windowsHide: true,
       env: {
@@ -124,7 +137,7 @@ export function registerInstallerIpc(): void {
 
   // ── 设置 npm 镜像源 ─────────────────────────────────────────
   ipcMain.handle('installer:set-registry', async (_event, url: string) => {
-    execSync(`npm config set registry ${url}`, { windowsHide: true })
+    execFileSync('npm', ['config', 'set', 'registry', url], { windowsHide: true })
     return { success: true }
   })
 }

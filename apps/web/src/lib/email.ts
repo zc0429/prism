@@ -19,7 +19,7 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
     console.log(`  To: ${payload.to}`)
     console.log(`  Subject: ${payload.subject}`)
     console.log(`  Body: ${payload.body.slice(0, 200)}...`)
-    return { success: true }
+    return { success: false, error: 'SMTP not configured' }
   }
 
   // 生产环境接入 nodemailer 或 Resend / SendGrid

@@ -39,11 +39,7 @@ async function encryptConfigKeys(config: ClaudeConfig): Promise<ClaudeConfig> {
   for (const provider of Object.keys(cloned.apiKeys)) {
     const entry = cloned.apiKeys[provider]
     if (entry && entry.key && !entry.key.startsWith('enc:')) {
-      try {
-        entry.key = 'enc:' + (await encryptClient(entry.key))
-      } catch {
-        // fallback: keep plaintext if encryption fails
-      }
+      entry.key = 'enc:' + (await encryptClient(entry.key))
     }
   }
   return cloned
@@ -55,11 +51,7 @@ async function decryptConfigKeys(config: ClaudeConfig): Promise<ClaudeConfig> {
   for (const provider of Object.keys(cloned.apiKeys)) {
     const entry = cloned.apiKeys[provider]
     if (entry && entry.key && entry.key.startsWith('enc:')) {
-      try {
-        entry.key = await decryptClient(entry.key.slice(4))
-      } catch {
-        // fallback: keep as-is if decryption fails
-      }
+      entry.key = await decryptClient(entry.key.slice(4))
     }
   }
   return cloned

@@ -31,29 +31,51 @@ export async function POST() {
   const fused: string[] = []
 
   for (const key of keys) {
-    if (!key.budgetLimit || key.budgetLimit <= 0) continue
+    const budgetLimit = key.budgetLimit
+    if (!budgetLimit || budgetLimit <= 0) continue
 
-    // 从 usage_logs 汇总实际消耗（按 requestId 关联）
-    const [usageResult] = await db
-      .select({
-        totalCost: sql<number>`COALESCE(SUM(${usageLogs.costUsd}), 0)`.mapWith(Number),
-      })
-      .from(usageLogs)
-      .where(and(eq(usageLogs.userId, userId), eq(usageLogs.requestId, key.litellmKeyId)))
-
-    const actualUsed = usageResult?.totalCost ?? key.budgetUsed ?? 0
-
-    if (actualUsed >= key.budgetLimit) {
-      await db
-        .update(virtualKeys)
-        .set({ isActive: false, budgetUsed: actualUsed })
+    // 使用事务防止竞态条件：检查与更新原子化
+    const result = await db.transaction(async (tx) => {
+      // 重新读取当前状态（行锁）
+      const [current] = await tx
+        .select({ budgetUsed: virtualKeys.budgetUsed, isActive: virtualKeys.isActive })
+        .from(virtualKeys)
         .where(eq(virtualKeys.id, key.id))
+        .limit(1)
+
+      if (!current || !current.isActive) return { fused: false, updated: false }
+
+      // 从 usage_logs 汇总实际消耗（按 requestId 关联）
+      const [usageResult] = await tx
+        .select({
+          totalCost: sql<number>`COALESCE(SUM(${usageLogs.costUsd}), 0)`.mapWith(Number),
+        })
+        .from(usageLogs)
+        .where(and(eq(usageLogs.userId, userId), eq(usageLogs.requestId, key.litellmKeyId)))
+
+      const actualUsed = usageResult?.totalCost ?? current.budgetUsed ?? 0
+
+      if (actualUsed >= budgetLimit) {
+        await tx
+          .update(virtualKeys)
+          .set({ isActive: false, budgetUsed: actualUsed })
+          .where(eq(virtualKeys.id, key.id))
+        return { fused: true, updated: true }
+      }
+
+      if (actualUsed !== (current.budgetUsed ?? 0)) {
+        await tx
+          .update(virtualKeys)
+          .set({ budgetUsed: actualUsed })
+          .where(eq(virtualKeys.id, key.id))
+        return { fused: false, updated: true }
+      }
+
+      return { fused: false, updated: false }
+    })
+
+    if (result.fused) {
       fused.push(key.litellmKeyId)
-    } else if (actualUsed !== (key.budgetUsed ?? 0)) {
-      await db
-        .update(virtualKeys)
-        .set({ budgetUsed: actualUsed })
-        .where(eq(virtualKeys.id, key.id))
     }
   }
 

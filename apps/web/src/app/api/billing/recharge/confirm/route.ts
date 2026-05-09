@@ -1,5 +1,5 @@
 import { auth } from '@/auth'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { transactions, users } from '@/lib/db/schema'
 import { z } from 'zod'
@@ -24,29 +24,31 @@ export async function POST(request: Request) {
   const { transactionId } = parsed.data
 
   const result = await db.transaction(async (tx) => {
-    const [txRecord] = await tx
-      .select()
-      .from(transactions)
-      .where(eq(transactions.id, transactionId))
-      .limit(1)
-
-    if (!txRecord) {
-      throw new Error('Transaction not found')
-    }
-
-    if (txRecord.userId !== userId) {
-      throw new Error('Forbidden')
-    }
-
-    if (txRecord.status !== 'pending') {
-      throw new Error('Transaction already processed')
-    }
-
+    // 原子更新：仅当 status='pending' 时才更新，利用数据库行锁确保幂等
     const [updatedTx] = await tx
       .update(transactions)
       .set({ status: 'completed' })
-      .where(eq(transactions.id, transactionId))
+      .where(and(eq(transactions.id, transactionId), eq(transactions.userId, userId), eq(transactions.status, 'pending')))
       .returning()
+
+    if (!updatedTx) {
+      // 查询原因用于返回准确错误信息
+      const [txRecord] = await tx
+        .select({ status: transactions.status, userId: transactions.userId })
+        .from(transactions)
+        .where(eq(transactions.id, transactionId))
+        .limit(1)
+
+      if (!txRecord) {
+        throw new Error('Transaction not found')
+      }
+
+      if (txRecord.userId !== userId) {
+        throw new Error('Forbidden')
+      }
+
+      throw new Error('Transaction already processed')
+    }
 
     const [user] = await tx
       .select({ credits: users.credits })
@@ -58,7 +60,7 @@ export async function POST(request: Request) {
       throw new Error('User not found')
     }
 
-    const newCredits = user.credits + (updatedTx?.credits ?? 0)
+    const newCredits = user.credits + (updatedTx.credits ?? 0)
 
     await tx
       .update(users)
