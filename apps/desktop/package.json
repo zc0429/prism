@@ -1,8 +1,14 @@
 {
   "name": "prism-desktop",
   "version": "0.2.1",
+  "description": "Prism — Claude Code 桌面端增强工具",
+  "author": "Prism Team",
   "private": true,
   "main": "dist/main/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zc0429/prism.git"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc && electron .",

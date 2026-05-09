@@ -1,6 +1,12 @@
 {
   "name": "prism",
+  "description": "Prism — Claude Code 桌面端增强工具",
+  "author": "Prism Team",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zc0429/prism.git"
+  },
   "scripts": {
     "dev": "cd apps/web && npm run dev",
     "build": "cd apps/web && npm run build",
