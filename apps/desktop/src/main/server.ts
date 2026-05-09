@@ -26,39 +26,49 @@ function safeError(...args: unknown[]): void {
 
 export async function startNextServer(): Promise<ServerProcess> {
   const port = 3456
+  const isDev = process.env.NODE_ENV === 'development'
 
-  const serverCwd =
-    process.env.NODE_ENV === 'development'
-      ? path.join(__dirname, '../../../web/.next/standalone')
-      : path.join(process.resourcesPath, 'next-server')
+  const serverCwd = isDev
+    ? path.join(__dirname, '../../../web/.next/standalone')
+    : path.join(process.resourcesPath, 'next-server')
 
-  const serverProcess = spawn(process.execPath, ['server.js'], {
-    cwd: serverCwd,
-    env: { ...process.env, PORT: String(port), NODE_ENV: 'production' },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
+  let serverProcess: ChildProcess
 
-  serverProcess.stdout?.on('data', (data: Buffer) => {
-    safeLog('[Next.js]', data.toString().trim())
-  })
+  if (isDev) {
+    serverProcess = spawn(process.execPath, ['server.js'], {
+      cwd: serverCwd,
+      env: { ...process.env, PORT: String(port), NODE_ENV: 'production' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
 
-  serverProcess.stdout?.on('error', () => {
-    // stdout pipe broken — ignore
-  })
+    serverProcess.stdout?.on('data', (data: Buffer) => {
+      safeLog('[Next.js]', data.toString().trim())
+    })
 
-  serverProcess.stderr?.on('data', (data: Buffer) => {
-    safeError('[Next.js]', data.toString().trim())
-  })
+    serverProcess.stdout?.on('error', () => {
+      // stdout pipe broken — ignore
+    })
 
-  serverProcess.stderr?.on('error', () => {
-    // stderr pipe broken — ignore
-  })
+    serverProcess.stderr?.on('data', (data: Buffer) => {
+      safeError('[Next.js]', data.toString().trim())
+    })
 
-  serverProcess.on('exit', (code) => {
+    serverProcess.stderr?.on('error', () => {
+      // stderr pipe broken — ignore
+    })
+  } else {
+    serverProcess = spawn(process.execPath, ['server.js'], {
+      cwd: serverCwd,
+      env: { ...process.env, PORT: String(port), NODE_ENV: 'production' },
+      stdio: 'ignore',
+    })
+  }
+
+  serverProcess.on('exit', (code: number | null) => {
     safeLog(`[Next.js] Server exited with code ${code}`)
   })
 
-  serverProcess.on('error', (err) => {
+  serverProcess.on('error', (err: Error) => {
     safeError('[Next.js] Spawn error:', err.message)
   })
 

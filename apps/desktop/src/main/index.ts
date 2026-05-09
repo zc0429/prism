@@ -7,6 +7,10 @@ import { createAppMenu } from './menu'
 import { createTray } from './tray'
 import { autoUpdater } from 'electron-updater'
 
+// Prevent EPIPE crash on Windows packaged app (no attached console)
+process.stdout?.on('error', () => {})
+process.stderr?.on('error', () => {})
+
 let mainWindow: BrowserWindow | null = null
 let serverProc: { port: number; process: import('child_process').ChildProcess } | null = null
 
@@ -18,6 +22,7 @@ app.whenReady().then(async () => {
   try {
     serverProc = await startNextServer()
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Failed to start Next.js server:', e)
     app.quit()
     return
