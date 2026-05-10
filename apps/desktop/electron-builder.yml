@@ -12,10 +12,11 @@ extraResources:
     to: next-server
     filter:
       - '**/*'
+  - from: ../../.env
+    to: .
 asar: true
 asarUnpack:
   - '**/*.node'
-compression: maximum
 artifactName: ${productName}-${version}-${arch}.${ext}
 win:
   target:

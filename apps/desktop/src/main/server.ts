@@ -54,7 +54,7 @@ export async function startNextServer(): Promise<ServerProcess> {
   if (isDev) {
     serverProcess = spawn(process.execPath, ['server.js'], {
       cwd: serverCwd,
-      env: { ...process.env, PORT: String(port), NODE_ENV: 'production' },
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', PORT: String(port), NODE_ENV: 'production' },
       stdio: ['ignore', 'pipe', 'pipe'],
     })
 
@@ -72,7 +72,7 @@ export async function startNextServer(): Promise<ServerProcess> {
   } else {
     serverProcess = spawn(process.execPath, ['server.js'], {
       cwd: serverCwd,
-      env: { ...process.env, PORT: String(port), NODE_ENV: 'production' },
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', PORT: String(port), NODE_ENV: 'production' },
       stdio: 'ignore',
     })
     logInfo('Spawned Next.js server with stdio: ignore')

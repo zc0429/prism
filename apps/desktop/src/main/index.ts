@@ -44,19 +44,8 @@ app.whenReady().then(async () => {
     logInfo('No .env file found, using process environment')
   }
 
-  // Start Next.js standalone server
-  try {
-    serverProc = await startNextServer()
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
-    logError('Failed to start Next.js server', e)
-    dialog.showErrorBox(
-      'Prism 启动失败',
-      `无法启动本地服务：\n${msg}\n\n日志位置：${path.join(require('os').homedir(), '.prism', 'logs')}`,
-    )
-    app.quit()
-    return
-  }
+  // Show window immediately with loading screen
+  mainWindow = createWindow()
 
   // Register native IPC handlers
   registerIpcHandlers()
@@ -64,11 +53,25 @@ app.whenReady().then(async () => {
   // Create application menu
   createAppMenu()
 
-  // Create main window
-  mainWindow = createWindow()
-
   // System tray
   createTray(mainWindow)
+
+  // Start Next.js standalone server in background
+  try {
+    serverProc = await startNextServer()
+    logInfo(`Server ready, loading app on port ${serverProc.port}`)
+    mainWindow.loadURL(`http://localhost:${serverProc.port}`)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    logError('Failed to start Next.js server', e)
+    const errorHtml = `data:text/html;charset=utf-8,${encodeURIComponent(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Prism</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0a0a0a;color:#e0e0e0;}.container{text-align:center;max-width:480px;padding:24px;}h1{font-size:20px;color:#f87171;}p{font-size:14px;color:#888;margin-top:12px;line-height:1.6;}code{background:#1a1a1a;padding:2px 6px;border-radius:4px;font-size:12px;}</style></head>
+<body><div class="container"><h1>Prism 启动失败</h1><p>无法启动本地服务：${msg.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p><p>日志位置：${path.join(require('os').homedir(), '.prism', 'logs').replace(/\\/g,'\\\\')}</p></div></body></html>`,
+    )}`
+    mainWindow.loadURL(errorHtml)
+    return
+  }
 
   // Auto-update check
   autoUpdater.checkForUpdatesAndNotify().catch(() => {
