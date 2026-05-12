@@ -58,6 +58,14 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.publish == false
         run: cd apps/desktop && npx electron-builder --${{ matrix.target }} --publish=never
 
+      - name: Upload built installer (for testing)
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: Installer-${{ matrix.target }}
+          path: apps/desktop/dist/*.*
+          retention-days: 7
+
       - name: Build & publish installer
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish == true)
         env:
