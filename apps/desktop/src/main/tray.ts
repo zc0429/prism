@@ -1,4 +1,4 @@
-import { Tray, Menu, BrowserWindow, app, nativeTheme } from 'electron'
+import { Tray, Menu, BrowserWindow, app, nativeTheme, nativeImage } from 'electron'
 import path from 'path'
 
 let tray: Tray | null = null
@@ -12,7 +12,12 @@ export function createTray(mainWindow: BrowserWindow): void {
       : '../../build/tray.png'
   )
 
-  tray = new Tray(iconPath)
+  const image = nativeImage.createFromPath(iconPath)
+  if (image.isEmpty()) {
+    return // icon not available, skip tray
+  }
+
+  tray = new Tray(image)
 
   // Listen for theme changes on macOS
   if (process.platform === 'darwin') {
@@ -23,7 +28,10 @@ export function createTray(mainWindow: BrowserWindow): void {
         __dirname,
         dark ? '../../build/tray@dark.png' : '../../build/tray.png'
       )
-      tray.setImage(newPath)
+      const newImage = nativeImage.createFromPath(newPath)
+      if (!newImage.isEmpty()) {
+        tray.setImage(newImage)
+      }
     })
   }
 

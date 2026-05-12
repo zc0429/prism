@@ -53,8 +53,12 @@ app.whenReady().then(async () => {
   // Create application menu
   createAppMenu()
 
-  // System tray
-  createTray(mainWindow)
+  // System tray (non-critical, must not block startup)
+  try {
+    createTray(mainWindow)
+  } catch (e) {
+    logError('Failed to create tray', e)
+  }
 
   // Start Next.js standalone server in background
   try {
