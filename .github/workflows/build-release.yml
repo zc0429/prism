@@ -63,7 +63,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Installer-${{ matrix.target }}
-          path: apps/desktop/dist/*.*
+          path: '**/dist/*.*'
           retention-days: 7
 
       - name: Build & publish installer
